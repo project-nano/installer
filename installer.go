@@ -68,6 +68,7 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
+	CurrentVersion    = "0.1.2"
 )
 
 func main() {
@@ -82,7 +83,7 @@ func main() {
 		ModuleFrontEnd: FrontendInstaller,
 		ModuleCell:     CellInstaller,
 	}
-	fmt.Printf("Welcome to %s installer\n", ProjectName)
+	fmt.Printf("Welcome to %s installer v%s\n", ProjectName, CurrentVersion)
 	var selected = map[int]bool{}
 	for {
 		for index := ModuleCore; index <= ModuleExit; index++ {

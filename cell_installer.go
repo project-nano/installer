@@ -75,6 +75,11 @@ func installCellDependencyPackages() (err error){
 	if err = cmd.Run();err != nil{
 		fmt.Printf("install pacakge fail: %s, %s\n", err.Error(), errOutput.String())
 		fmt.Println("try installing from online reciprocity...")
+		{
+			//install EPEL first
+			epel := exec.Command("yum", "install", "-y", "epel-release")
+			epel.Run()
+		}
 		cmd = exec.Command("yum", "install", "-y", "qemu-system-x86", "bridge-utils","libvirt","seabios")
 		if err = cmd.Run();err != nil {
 			fmt.Printf("install online reciprocity fail: %s, %s\n", err.Error(), errOutput.String())
