@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/user"
 	"bytes"
+	"strings"
 )
 
 const (
@@ -172,6 +173,9 @@ func configureLibvirtGroup(session *SessionInfo) (err error) {
 	const (
 		GroupName = "libvirt"
 	)
+	if err = enableQEMUAuthority(session.User, session.UserGroup); err != nil{
+		return err
+	}
 	if _, err = user.LookupGroup(GroupName);err != nil{
 		var cmd = exec.Command("groupadd","libvirt")
 		if err = cmd.Run();err != nil{
@@ -213,5 +217,26 @@ func configureLibvirtGroup(session *SessionInfo) (err error) {
 	}else{
 		fmt.Printf("user %s added to group %s\n", session.User, GroupName)
 	}
+	return nil
+}
+
+func enableQEMUAuthority(user, group string) (err error){
+	const (
+		ConfigPath = "/etc/libvirt/qemu.conf"
+		DefaultUser = "#user = \"root\""
+		DefaultGroup = "#group = \"root\""
+	)
+	data, err := ioutil.ReadFile(ConfigPath)
+	if err != nil{
+		return err
+	}
+	var userString = fmt.Sprintf("user = \"%s\"", user)
+	var groupString = fmt.Sprintf("group = \"%s\"", group)
+	var content = strings.Replace(string(data), DefaultUser, userString, 1)
+	content = strings.Replace(content, DefaultGroup, groupString, 1)
+	if err = ioutil.WriteFile(ConfigPath, []byte(content), DefaultFilePerm);err != nil{
+		return
+	}
+	fmt.Printf("user %s / group %s updated in %s\n", user, group, ConfigPath)
 	return nil
 }
