@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"bytes"
 	"strings"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -225,6 +226,7 @@ func enableQEMUAuthority(user, group string) (err error){
 		ConfigPath = "/etc/libvirt/qemu.conf"
 		DefaultUser = "#user = \"root\""
 		DefaultGroup = "#group = \"root\""
+		KVMDevice = "/dev/kvm"
 	)
 	data, err := ioutil.ReadFile(ConfigPath)
 	if err != nil{
@@ -238,5 +240,16 @@ func enableQEMUAuthority(user, group string) (err error){
 		return
 	}
 	fmt.Printf("user %s / group %s updated in %s\n", user, group, ConfigPath)
+	{
+		if _, err = os.Stat(KVMDevice); os.IsNotExist(err){
+			err = errors.New("No KVM module available, check Intel VT-x/AMD-v in BIOS to enable virtualization before installing Nano")
+			return
+		}
+		var cmd = exec.Command("chown", fmt.Sprintf("%s:%s", user, group), KVMDevice)
+		if err = cmd.Run(); err != nil{
+			return
+		}
+		fmt.Printf("%s owner changed\n", KVMDevice)
+	}
 	return nil
 }
