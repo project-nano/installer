@@ -16,6 +16,7 @@ import (
 const (
 	MonitorPortBegin   = 5901
 	MonitorPortEnd     = 6000
+	InitiatorMagicPort = 25469
 )
 func CellInstaller(session *SessionInfo) (ranges []PortRange, err error){
 	const (
@@ -55,7 +56,7 @@ func CellInstaller(session *SessionInfo) (ranges []PortRange, err error){
 		return
 	}
 
-	ranges = []PortRange{{MonitorPortBegin, MonitorPortEnd, "tcp"}}
+	ranges = []PortRange{{MonitorPortBegin, MonitorPortEnd, "tcp"}, {InitiatorMagicPort, InitiatorMagicPort, "tcp"}}
 	fmt.Println("cell module installed")
 	return ranges, nil
 }
@@ -71,7 +72,7 @@ func installCellDependencyPackages() (err error){
 		return
 	}
 	fmt.Println("installing cell dependency packages...")
-	var cmd = exec.Command("rpm", "-i", fmt.Sprintf("%s/*", packagePath))
+	var cmd = exec.Command("rpm", "-i", "--replacepkgs", fmt.Sprintf("%s/*", packagePath))
 	var errOutput bytes.Buffer
 	cmd.Stderr = &errOutput
 	if err = cmd.Run();err != nil{
@@ -82,7 +83,7 @@ func installCellDependencyPackages() (err error){
 			epel := exec.Command("yum", "install", "-y", "epel-release")
 			epel.Run()
 		}
-		cmd = exec.Command("yum", "install", "-y", "qemu-system-x86", "bridge-utils","libvirt","seabios")
+		cmd = exec.Command("yum", "install", "-y", "qemu-system-x86", "bridge-utils","libvirt","seabios", "genisoimage")
 		if err = cmd.Run();err != nil {
 			fmt.Printf("install online reciprocity fail: %s, %s\n", err.Error(), errOutput.String())
 			return

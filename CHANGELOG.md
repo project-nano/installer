@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.1.5] - 2018-8-17
+
+### Added
+
+- Open magic port TCP 25469 for cell guest initiator service
+
+- Install genisoimage for building cloud-init image
+
 ## [0.1.4] - 2018-8-7
 
 ### Modified
