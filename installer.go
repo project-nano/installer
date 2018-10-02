@@ -68,7 +68,7 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
-	CurrentVersion    = "0.1.5"
+	CurrentVersion    = "0.1.6"
 )
 
 func main() {
@@ -143,10 +143,16 @@ func main() {
 	}
 	if _, exists := selected[ModuleCell];exists{
 		if err = installCellDependencyPackages();err != nil{
-			return
+			fmt.Printf("install cell dependency package fail: %s\n", err.Error())
+			answer, err := framework.InputString("Do you want to continue? (y/N)", "no")
+			answer = strings.ToLower(answer)
+			if err != nil || ("y" != answer && "yes" != answer){
+				fmt.Println("installing interupted by user")
+				return
+			}
 		}
 		if err = configureNetworkForCell();err != nil{
-			fmt.Printf("configure default network bridge fail: %s", err.Error())
+			fmt.Printf("configure default network bridge fail: %s\n", err.Error())
 			return
 		}
 	}

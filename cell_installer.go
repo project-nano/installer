@@ -72,7 +72,7 @@ func installCellDependencyPackages() (err error){
 		return
 	}
 	fmt.Println("installing cell dependency packages...")
-	var cmd = exec.Command("rpm", "-i", "--replacepkgs", fmt.Sprintf("%s/*", packagePath))
+	var cmd = exec.Command("rpm", "-i", "--force", fmt.Sprintf("%s/*", packagePath))
 	var errOutput bytes.Buffer
 	cmd.Stderr = &errOutput
 	if err = cmd.Run();err != nil{
@@ -83,7 +83,8 @@ func installCellDependencyPackages() (err error){
 			epel := exec.Command("yum", "install", "-y", "epel-release")
 			epel.Run()
 		}
-		cmd = exec.Command("yum", "install", "-y", "qemu-system-x86", "bridge-utils","libvirt","seabios", "genisoimage")
+		cmd = exec.Command("yum", "install", "-y", "qemu-system-x86", "bridge-utils","libvirt",
+			"seabios", "genisoimage", "nfs-utils", "policycoreutils-python")
 		if err = cmd.Run();err != nil {
 			fmt.Printf("install online reciprocity fail: %s, %s\n", err.Error(), errOutput.String())
 			return

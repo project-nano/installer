@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.1.6] - 2018-10-2
+
+### Changed
+
+- Install nfs-client/semanage for cell
+
+- Ask if continue when installing fail
+
 ## [0.1.5] - 2018-8-17
 
 ### Added
