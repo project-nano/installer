@@ -156,6 +156,10 @@ func main() {
 			return
 		}
 	}
+	if err = checkDefaultRoute(); err != nil{
+		fmt.Printf("check default route fail: %s\n", err.Error())
+		return
+	}
 	for index := ModuleCore; index < ModuleExit; index++ {
 		if _, exists := selected[index]; exists {
 			//selected
@@ -181,6 +185,29 @@ func main() {
 		return
 	}
 	fmt.Println("all modules installed\n")
+}
+
+func checkDefaultRoute() (err error){
+	routes, err := netlink.RouteList(nil, netlink.FAMILY_ALL)
+	if err != nil{
+		return
+	}
+	if 0 == len(routes){
+		err = errors.New("no route available")
+		return
+	}
+	var defaultRouteAvailable = false
+	for _, route := range routes{
+		if route.Dst == nil{
+			defaultRouteAvailable = true
+		}
+	}
+	if !defaultRouteAvailable{
+		err = errors.New("no default route available")
+		return
+	}
+	fmt.Printf("default route ready\n")
+	return nil
 }
 
 func enableIPForward() (err error){

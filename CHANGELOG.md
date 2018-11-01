@@ -8,6 +8,12 @@
 
 - Ask if continue when installing fail
 
+## [0.1.6] - 2018-11-1
+
+### Added
+
+- Check default route
+
 ## [0.1.5] - 2018-8-17
 
 ### Added
