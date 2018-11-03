@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.7] - 2018-11-3
+
+### Added
+
+- Check default route
+
 ## [0.1.6] - 2018-10-2
 
 ### Changed
@@ -7,12 +13,6 @@
 - Install nfs-client/semanage for cell
 
 - Ask if continue when installing fail
-
-## [0.1.6] - 2018-11-1
-
-### Added
-
-- Check default route
 
 ## [0.1.5] - 2018-8-17
 
