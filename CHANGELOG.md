@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.8] - 2018-11-30
+
+### Added
+
+- Enable DHCP port for cell
+
 ## [0.1.7] - 2018-11-3
 
 ### Added

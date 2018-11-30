@@ -17,7 +17,9 @@ const (
 	MonitorPortBegin   = 5901
 	MonitorPortEnd     = 6000
 	InitiatorMagicPort = 25469
+	DHCPServerPort     = 67
 )
+
 func CellInstaller(session *SessionInfo) (ranges []PortRange, err error){
 	const (
 		ModulePathName    = "cell"
@@ -56,7 +58,11 @@ func CellInstaller(session *SessionInfo) (ranges []PortRange, err error){
 		return
 	}
 
-	ranges = []PortRange{{MonitorPortBegin, MonitorPortEnd, "tcp"}, {InitiatorMagicPort, InitiatorMagicPort, "tcp"}}
+	ranges = []PortRange{
+		{MonitorPortBegin, MonitorPortEnd, "tcp"},
+		{InitiatorMagicPort, InitiatorMagicPort, "tcp"},
+		{DHCPServerPort, DHCPServerPort, "udp"},
+	}
 	fmt.Println("cell module installed")
 	return ranges, nil
 }
