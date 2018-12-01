@@ -537,10 +537,6 @@ func configureNetworkForCell() (err error) {
 	if "yes" != input{
 		return errors.New("user interrupted")
 	}
-	if err = linkBridge(ename, DefaultBridgeName);err != nil{
-		return
-	}
-
 	{
 		//disable & stop network manager
 		var cmd = exec.Command("systemctl", "stop", "NetworkManager")
@@ -556,6 +552,11 @@ func configureNetworkForCell() (err error) {
 			fmt.Println("network manager disabled")
 		}
 	}
+
+	if err = linkBridge(ename, DefaultBridgeName);err != nil{
+		return
+	}
+
 	{
 		//restart network
 		var cmd = exec.Command("systemctl", "stop", "network")
@@ -596,27 +597,28 @@ func linkBridge(interfaceName, bridgeName string) (err error){
 	)
 	var interfaceScript = filepath.Join(ScriptsPath, fmt.Sprintf("%s-%s", ScriptPrefix, interfaceName))
 	var bridgeScript = filepath.Join(ScriptsPath, fmt.Sprintf("%s-%s", ScriptPrefix, bridgeName))
-	{
-		//write script
-		file, err := os.Create(interfaceScript)
-		if err != nil{
-			return err
-		}
-		defer file.Close()
-		fmt.Fprintf(file, "NM_CONTROLLED=no\nTYPE=Ethernet\nNAME=%s\nDEVICE=%s\nONBOOT=yes\nBRIDGE=%s\nZONE=public\n",
-			interfaceName, interfaceName, bridgeName)
-		fmt.Printf("interface script %s generated\n", interfaceScript)
+	interfaceConfig, err := readInterfaceConfig(interfaceScript)
+	if err != nil{
+		return
 	}
-	{
-		file, err := os.Create(bridgeScript)
-		if err != nil{
-			return err
-		}
-		defer file.Close()
-		fmt.Fprintf(file, "NM_CONTROLLED=no\nBOOTPROTO=dhcp\nDELAY=0\nTYPE=Bridge\nNAME=%s\nDEVICE=%s\nONBOOT=yes\nZONE=public\n",
-			bridgeName, bridgeName)
-		fmt.Printf("bridge script %s generated\n", bridgeScript)
+	bridgeConfig, err := generateBridgeConfig(bridgeName)
+	if err != nil{
+		return
 	}
+	err = migrateInterfaceConfig(bridgeName, &interfaceConfig, &bridgeConfig)
+	if err != nil{
+		return
+	}
+	err = writeInterfaceConfig(interfaceConfig, interfaceScript)
+	if err != nil{
+		return
+	}
+	fmt.Printf("interface script %s updated\n", interfaceScript)
+	err = writeInterfaceConfig(bridgeConfig, bridgeScript)
+	if err != nil{
+		return
+	}
+	fmt.Printf("bridge script %s generated\n", bridgeScript)
 	link, err := netlink.LinkByName(interfaceName)
 	if err != nil{
 		return
@@ -643,6 +645,82 @@ func linkBridge(interfaceName, bridgeName string) (err error){
 		return
 	}
 	fmt.Printf("link %s up\n", interfaceName)
+	return nil
+}
+
+type InterfaceConfig struct {
+	Params map[string]string
+}
+
+func generateBridgeConfig(bridgeName string)(config InterfaceConfig, err error){
+	config.Params = map[string]string{
+		"NM_CONTROLLED": "no",
+		"DELAY": "0",
+		"TYPE": "Bridge",
+		"ONBOOT": "yes",
+		"ZONE": "public",
+	}
+	config.Params["NAME"] = bridgeName
+	config.Params["DEVICE"] = bridgeName
+	return config, nil
+}
+func readInterfaceConfig(filepath string) (config InterfaceConfig, err error){
+	const (
+		ValidDataCount = 2
+		DataName = 0
+		DataValue = 1
+	)
+	file, err := os.Open(filepath)
+	if err != nil{
+		return
+	}
+	config.Params = map[string]string{}
+	var scanner = bufio.NewScanner(file)
+	for scanner.Scan(){
+		var line = scanner.Text()
+		var data = strings.Split(line, "=")
+		if ValidDataCount != len(data){
+			err = fmt.Errorf("invalid line data: %s", line)
+			return
+		}
+		config.Params[data[DataName]] = data[DataValue]
+	}
+	fmt.Printf("%d params loaded from '%s'\n", len(config.Params), filepath)
+	return config, nil
+}
+
+func writeInterfaceConfig(config InterfaceConfig, filepath string) (err error){
+	file, err := os.Create(filepath)
+	if err != nil{
+		return err
+	}
+	for name, value := range config.Params{
+		fmt.Fprintf(file, "%s=%s\n", name, value)
+	}
+	return file.Close()
+}
+
+func migrateInterfaceConfig(bridgeName string, ifcfg, brcfg *InterfaceConfig) (err error){
+	const (
+		NMControl = "NM_CONTROLLED"
+		BRIDGE    = "BRIDGE"
+		ONBOOT    = "ONBOOT"
+	)
+	var migrateList = []string{
+		"BOOTPROTO", "PREFIX", "IPADDR", "GATEWAY", "NETMASK", "DNS1", "DNS2", "DOMAIN",
+		"DEFROUTE", "PEERDNS", "PEERROUTES", "IPV4_FAILURE_FATAL", "IPV6_FAILURE_FATAL", "PROXY_METHOD",
+		"IPV6ADDR", "IPV6_DEFAULTGW", "IPV6_AUTOCONF", "IPV6_DEFROUTE", "IPV6INIT", "IPV6_ADDR_GEN_MODE",
+	}
+
+	for _, name := range migrateList{
+		if value, exists := ifcfg.Params[name]; exists{
+			brcfg.Params[name] = value
+			delete(ifcfg.Params, name)
+		}
+	}
+	ifcfg.Params[NMControl] = "no"
+	ifcfg.Params[BRIDGE] = bridgeName
+	ifcfg.Params[ONBOOT] = "yes"
 	return nil
 }
 

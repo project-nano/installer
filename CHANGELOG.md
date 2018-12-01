@@ -1,10 +1,16 @@
 # Change Log
 
-## [0.1.8] - 2018-11-30
+## [0.1.8] - 2018-12-1
 
 ### Added
 
 - Enable DHCP port for cell
+
+### Changed
+
+- Disable NetworkManager before link bridge to prevent ssh disconnection
+
+- Migrate bridge configure from interface
 
 ## [0.1.7] - 2018-11-3
 
