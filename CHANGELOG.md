@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.9] - 2019-4-22
+
+### Fixed
+
+- Read interface fail due to script code in ifcfg
+
 ## [0.1.8] - 2018-12-1
 
 ### Added
