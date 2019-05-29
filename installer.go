@@ -58,6 +58,7 @@ const (
 	ModuleCore     = iota
 	ModuleFrontEnd
 	ModuleCell
+	ModuleAll
 	ModuleExit
 )
 
@@ -75,6 +76,7 @@ func main() {
 		ModuleCore:     "Core",
 		ModuleFrontEnd: "FrontEnd",
 		ModuleCell:     "Cell",
+		ModuleAll:      "All",
 		ModuleExit:     "Exit",
 	}
 	var optionFunctions = map[int]ModuleInstaller{
@@ -89,7 +91,7 @@ func main() {
 			name, _ := optionNames[index]
 			fmt.Printf("%d : %s\n", index, name)
 		}
-		fmt.Println("Input index to select module to install, multi-modules split by ',' (like 2,3): \n")
+		fmt.Println("Input index to select module to install, multi-modules split by ',' (like 2,3):")
 		var input string
 		fmt.Scanln(&input)
 		if "" == input {
@@ -107,6 +109,9 @@ func main() {
 		}
 		if _, exists := selected[ModuleExit]; exists {
 			return
+		}
+		if _, exists := selected[ModuleAll]; exists {
+			selected = map[int]bool{ModuleCore: true, ModuleFrontEnd:true, ModuleCell:true}
 		}
 		break
 	}

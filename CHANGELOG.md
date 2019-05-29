@@ -1,6 +1,10 @@
 # Change Log
 
-## [0.1.9] - 2019-4-22
+## [0.1.9] - 2019-5-29
+
+### Added
+
+- Add 'all' option to install all modules
 
 ### Fixed
 
