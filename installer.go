@@ -59,6 +59,7 @@ const (
 	ModuleFrontEnd
 	ModuleCell
 	ModuleAll
+	ModuleUpdate
 	ModuleExit
 )
 
@@ -68,7 +69,7 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
-	CurrentVersion    = "0.1.9"
+	CurrentVersion    = "1.0.0"
 )
 
 func main() {
@@ -77,8 +78,10 @@ func main() {
 		ModuleFrontEnd: "FrontEnd",
 		ModuleCell:     "Cell",
 		ModuleAll:      "All",
+		ModuleUpdate:   "Update",
 		ModuleExit:     "Exit",
 	}
+
 	var optionFunctions = map[int]ModuleInstaller{
 		ModuleCore:     CoreInstaller,
 		ModuleFrontEnd: FrontendInstaller,
@@ -112,6 +115,10 @@ func main() {
 		}
 		if _, exists := selected[ModuleAll]; exists {
 			selected = map[int]bool{ModuleCore: true, ModuleFrontEnd:true, ModuleCell:true}
+		}
+		if _, exists := selected[ModuleUpdate]; exists{
+			UpdateAllModules()
+			return
 		}
 		break
 	}

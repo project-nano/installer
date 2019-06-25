@@ -1,4 +1,9 @@
 # Change Log
+## [1.0.0] - 2019-6-25
+
+### Added
+
+- Add 'Update' option to update all installed modules
 
 ## [0.1.9] - 2019-5-29
 
