@@ -23,12 +23,10 @@ type ModuleBinary struct {
 }
 
 func UpdateAllModules() {
-
-
 	var modules = map[string]ModuleBinary{
 		"core": ModuleBinary{"core", "core", nil},
 		"cell": ModuleBinary{"cell", "cell", nil},
-		"frontend": {"frontend", "frontend", []ResourcePath{{"bin/frontend_files", "resource"}}},
+		"frontend": {"frontend", "frontend", []ResourcePath{{path.Join("bin", "frontend_files", "resource"), "resource"}}},
 	}
 
 	var moduleOrder = []string{"core", "cell", "frontend"}
@@ -40,12 +38,12 @@ func UpdateAllModules() {
 	var err error
 	projectPath, err = framework.InputString("Project Installed Path", DefaultProjectPath)
 	if err != nil{
-		fmt.Printf("get installed path fail: %s", err.Error())
+		fmt.Printf("get installed path fail: %s\n", err.Error())
 		return
 	}
 
 	if _, err = os.Stat(projectPath); os.IsNotExist(err){
-		fmt.Printf("project path '%s' not exists", projectPath)
+		fmt.Printf("project path '%s' not exists\n", projectPath)
 		return
 	}
 
@@ -57,23 +55,23 @@ func UpdateAllModules() {
 		}else if binary, exists := modules[moduleName]; exists{
 			binaries = append(binaries, binary)
 		}else{
-			fmt.Printf("invalid module '%s' in path '%s'", moduleName, projectPath)
+			fmt.Printf("invalid module '%s' in path '%s'\n", moduleName, projectPath)
 			return
 		}
 	}
 
 	if 0 == len(binaries){
-		fmt.Println("no module binary available")
+		fmt.Println("no module binary available\n")
 		return
 	}
 	for _, binary := range binaries {
 		err = updateModule(projectPath, binary)
 		if err != nil{
-			fmt.Printf("update module '%s' fail: %s", binary.Module, err.Error())
+			fmt.Printf("update module '%s' fail: %s\n", binary.Module, err.Error())
 			return
 		}
 	}
-	fmt.Printf("%d module(s) updated success", len(binaries))
+	fmt.Printf("%d module(s) updated success\n", len(binaries))
 }
 
 func updateModule(projectPath string, binary ModuleBinary) (err error) {
@@ -85,37 +83,37 @@ func updateModule(projectPath string, binary ModuleBinary) (err error) {
 	if isRunning{
 		//stop first
 		if err = stopModule(binaryName); err != nil{
-			err = fmt.Errorf("stop binary '%s' fail: %s", binaryName, err.Error())
+			err = fmt.Errorf("stop binary '%s' fail: %s\n", binaryName, err.Error())
 			return
 		}
-		fmt.Printf("module %s stopped", binary.Module)
+		fmt.Printf("module %s stopped\n", binary.Module)
 	}
 	var sourceBinary = path.Join(BinaryPathName, binary.Binary)
 	if err = copyFile(sourceBinary, binaryName); err != nil{
-		err = fmt.Errorf("overwrite binary '%s' fail: %s", binaryName, err.Error())
+		err = fmt.Errorf("overwrite binary '%s' fail: %s\n", binaryName, err.Error())
 		return
 	}
-	fmt.Printf("overwrite %s success", binaryName)
+	fmt.Printf("overwrite %s success\n", binaryName)
 	if 0 != len(binary.Resources){
 		for _, resource := range binary.Resources{
 			var targetPath = path.Join(projectPath, binary.Module, resource.Target)
 			if err = copyDir(resource.Source, targetPath); err != nil{
-				err = fmt.Errorf("overwrite to resource path '%s' fail: %s", targetPath, err.Error())
+				err = fmt.Errorf("overwrite to resource path '%s' fail: %s\n", targetPath, err.Error())
 				return
 			}
-			fmt.Printf("resoure %s overwritten to '%s'", resource.Source, targetPath)
+			fmt.Printf("resoure %s overwritten to '%s'\n", resource.Source, targetPath)
 		}
 	}
 
 	if isRunning{
 		//start again
 		if err = startModule(binaryName); err != nil{
-			err = fmt.Errorf("restart binary '%s' fail: %s", binaryName, err.Error())
+			err = fmt.Errorf("restart binary '%s' fail: %s\n", binaryName, err.Error())
 			return
 		}
-		fmt.Printf("module %s restarted", binary.Module)
+		fmt.Printf("module %s restarted\n", binary.Module)
 	}
-	fmt.Printf("module %s update success", binary.Module)
+	fmt.Printf("module %s update success\n", binary.Module)
 	return nil
 }
 
