@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"path"
+	"os/exec"
+	"bytes"
+	"strings"
+	"github.com/pkg/errors"
 )
 type ResourcePath struct {
 	Source string
@@ -72,5 +77,93 @@ func UpdateAllModules() {
 }
 
 func updateModule(projectPath string, binary ModuleBinary) (err error) {
-	panic("not implement")
+	var binaryName = path.Join(projectPath, binary.Module, binary.Binary)
+	isRunning, err := isModuleRunning(binaryName)
+	if err != nil{
+		return err
+	}
+	if isRunning{
+		//stop first
+		if err = stopModule(binaryName); err != nil{
+			err = fmt.Errorf("stop binary '%s' fail: %s", binaryName, err.Error())
+			return
+		}
+		fmt.Printf("module %s stopped", binary.Module)
+	}
+	var sourceBinary = path.Join(BinaryPathName, binary.Binary)
+	if err = copyFile(sourceBinary, binaryName); err != nil{
+		err = fmt.Errorf("overwrite binary '%s' fail: %s", binaryName, err.Error())
+		return
+	}
+	fmt.Printf("overwrite %s success", binaryName)
+	if 0 != len(binary.Resources){
+		for _, resource := range binary.Resources{
+			var targetPath = path.Join(projectPath, binary.Module, resource.Target)
+			if err = copyDir(resource.Source, targetPath); err != nil{
+				err = fmt.Errorf("overwrite to resource path '%s' fail: %s", targetPath, err.Error())
+				return
+			}
+			fmt.Printf("resoure %s overwritten to '%s'", resource.Source, targetPath)
+		}
+	}
+
+	if isRunning{
+		//start again
+		if err = startModule(binaryName); err != nil{
+			err = fmt.Errorf("restart binary '%s' fail: %s", binaryName, err.Error())
+			return
+		}
+		fmt.Printf("module %s restarted", binary.Module)
+	}
+	fmt.Printf("module %s update success", binary.Module)
+	return nil
+}
+
+func isModuleRunning(binaryPath string) (running bool, err error) {
+	var cmd = exec.Command(binaryPath, "status")
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	if err = cmd.Run(); err != nil{
+		return
+	}
+	const (
+		Keyword = "running"
+	)
+	return strings.Contains(output.String(), Keyword), nil
+}
+
+func startModule(binaryPath string) (err error){
+	var cmd = exec.Command(binaryPath, "start")
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	if err = cmd.Run(); err != nil{
+		return
+	}
+	const (
+		Keyword = "fail"
+	)
+	var content = output.String()
+	if strings.Contains(content, Keyword){
+		//fail
+		return errors.New(content)
+	}
+	return nil
+}
+
+func stopModule(binaryPath string) (err error){
+	var cmd = exec.Command(binaryPath, "stop")
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	if err = cmd.Run(); err != nil{
+		return
+	}
+	const (
+		Keyword = "fail"
+	)
+	var content = output.String()
+	if strings.Contains(content, Keyword){
+		//fail
+		return errors.New(content)
+	}
+	return nil
 }
