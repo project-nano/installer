@@ -10,6 +10,9 @@ import (
 	"bytes"
 	"strings"
 	"github.com/pkg/errors"
+	"crypto/sha1"
+	"io"
+	"time"
 )
 type ResourcePath struct {
 	Source string
@@ -61,7 +64,7 @@ func UpdateAllModules() {
 	}
 
 	if 0 == len(binaries){
-		fmt.Println("no module binary available\n")
+		fmt.Println("no module binary available")
 		return
 	}
 	for _, binary := range binaries {
@@ -75,7 +78,17 @@ func UpdateAllModules() {
 }
 
 func updateModule(projectPath string, binary ModuleBinary) (err error) {
+	var sourceBinary = path.Join(BinaryPathName, binary.Binary)
 	var binaryName = path.Join(projectPath, binary.Module, binary.Binary)
+	isIdentical, err := isIdentical(sourceBinary, binaryName)
+	if err != nil{
+		return err
+	}
+	if isIdentical{
+		fmt.Printf("module %s already updated\n", binary.Module)
+		return nil
+	}
+
 	isRunning, err := isModuleRunning(binaryName)
 	if err != nil{
 		return err
@@ -87,8 +100,12 @@ func updateModule(projectPath string, binary ModuleBinary) (err error) {
 			return
 		}
 		fmt.Printf("module %s stopped\n", binary.Module)
+		const (
+			StopGap = time.Millisecond * 300
+		)
+		time.Sleep(StopGap)
 	}
-	var sourceBinary = path.Join(BinaryPathName, binary.Binary)
+
 	if err = copyFile(sourceBinary, binaryName); err != nil{
 		err = fmt.Errorf("overwrite binary '%s' fail: %s\n", binaryName, err.Error())
 		return
@@ -115,6 +132,36 @@ func updateModule(projectPath string, binary ModuleBinary) (err error) {
 	}
 	fmt.Printf("module %s update success\n", binary.Module)
 	return nil
+}
+
+func isIdentical(source, target string) (identical bool, err error){
+	var files = []string{target, source}
+	var hashResult [][]byte
+	for _, filename := range files{
+		var fileStream *os.File
+		fileStream, err = os.Open(filename)
+		if err != nil{
+			return
+		}
+		defer fileStream.Close()
+		var hashLoader = sha1.New()
+		if _, err = io.Copy(hashLoader, fileStream); err != nil{
+			return
+		}
+		var fileHash = hashLoader.Sum(nil)
+		hashResult = append(hashResult, fileHash)
+	}
+	const (
+		TargetHashOffset = iota
+		SourceHashOffset
+		ValidHashCount   = 2
+	)
+	if ValidHashCount != len(hashResult){
+		err = fmt.Errorf("invalid hash count %d", len(hashResult))
+		return false, err
+	}
+
+	return bytes.Equal(hashResult[TargetHashOffset], hashResult[SourceHashOffset]), nil
 }
 
 func isModuleRunning(binaryPath string) (running bool, err error) {
