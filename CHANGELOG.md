@@ -5,6 +5,10 @@
 
 - Add 'Update' option to update all installed modules
 
+### Changed
+
+- Change namespace of the reference library to "github.com/project-nano"
+
 ## [0.1.9] - 2019-5-29
 
 ### Added

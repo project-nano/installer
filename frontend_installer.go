@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"os"
 	"fmt"
-	"nano/framework"
+	"github.com/project-nano/framework"
 	"encoding/json"
 	"io/ioutil"
 )
