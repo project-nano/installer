@@ -29,7 +29,7 @@ func UpdateAllModules() {
 	var modules = map[string]ModuleBinary{
 		"core": ModuleBinary{"core", "core", nil},
 		"cell": ModuleBinary{"cell", "cell", nil},
-		"frontend": {"frontend", "frontend", []ResourcePath{{path.Join("bin", "frontend_files", "resource"), "resource"}}},
+		"frontend": {"frontend", "frontend", []ResourcePath{{path.Join("bin", FrontEndFilesPath, FrontEndWebPath), FrontEndWebPath}}},
 	}
 
 	var moduleOrder = []string{"core", "cell", "frontend"}

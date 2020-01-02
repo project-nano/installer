@@ -1,4 +1,11 @@
 # Change Log
+
+## [1.1.0] - 2020-01-02
+
+### Changed
+
+- Change directory of frontend portal files from 'resource' to 'web_root'
+
 ## [1.0.0] - 2019-6-25
 
 ### Added

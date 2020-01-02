@@ -12,6 +12,8 @@ import (
 const (
 	PortalPortBegin   = 5870
 	PortalPortEnd     = 5899
+	FrontEndFilesPath = "frontend_files"
+	FrontEndWebPath   = "web_root"
 )
 
 func FrontendInstaller(session *SessionInfo) (ranges []PortRange, err error){
@@ -54,15 +56,12 @@ func FrontendInstaller(session *SessionInfo) (ranges []PortRange, err error){
 }
 
 func copyResources(session *SessionInfo, workingPath string) (err error){
-	const (
-		FilesPath = "frontend_files"
-		ResourcePathName = "resource"
-	)
-	var sourcePath = filepath.Join(session.BinaryPath, FilesPath, ResourcePathName)
+
+	var sourcePath = filepath.Join(session.BinaryPath, FrontEndFilesPath, FrontEndWebPath)
 	if _, err = os.Stat(sourcePath);os.IsNotExist(err){
 		return
 	}
-	var targetPath = filepath.Join(workingPath, ResourcePathName)
+	var targetPath = filepath.Join(workingPath, FrontEndWebPath)
 	return copyDir(sourcePath, targetPath)
 }
 

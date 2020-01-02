@@ -69,7 +69,7 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
-	CurrentVersion    = "1.0.0"
+	CurrentVersion    = "1.1.0"
 )
 
 func main() {
