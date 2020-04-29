@@ -25,7 +25,7 @@ type ModuleBinary struct {
 	Resources []ResourcePath
 }
 
-func UpdateAllModules() {
+func UpdateAllModules(forcibly bool) {
 	var modules = map[string]ModuleBinary{
 		"core": ModuleBinary{"core", "core", nil},
 		"cell": ModuleBinary{"cell", "cell", nil},
@@ -68,7 +68,7 @@ func UpdateAllModules() {
 		return
 	}
 	for _, binary := range binaries {
-		err = updateModule(projectPath, binary)
+		err = updateModule(projectPath, binary, forcibly)
 		if err != nil{
 			fmt.Printf("update module '%s' fail: %s\n", binary.Module, err.Error())
 			return
@@ -77,16 +77,18 @@ func UpdateAllModules() {
 	fmt.Printf("%d module(s) updated success\n", len(binaries))
 }
 
-func updateModule(projectPath string, binary ModuleBinary) (err error) {
+func updateModule(projectPath string, binary ModuleBinary, forcibly bool) (err error) {
 	var sourceBinary = path.Join(BinaryPathName, binary.Binary)
 	var binaryName = path.Join(projectPath, binary.Module, binary.Binary)
-	isIdentical, err := isIdentical(sourceBinary, binaryName)
-	if err != nil{
-		return err
-	}
-	if isIdentical{
-		fmt.Printf("module %s already updated\n", binary.Module)
-		return nil
+	if !forcibly {
+		isIdentical, err := isIdentical(sourceBinary, binaryName)
+		if err != nil{
+			return err
+		}
+		if isIdentical{
+			fmt.Printf("module %s already updated\n", binary.Module)
+			return nil
+		}
 	}
 
 	isRunning, err := isModuleRunning(binaryName)

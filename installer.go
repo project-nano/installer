@@ -60,6 +60,7 @@ const (
 	ModuleCell
 	ModuleAll
 	ModuleUpdate
+	ModuleForciblyUpdate
 	ModuleExit
 )
 
@@ -69,7 +70,7 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
-	CurrentVersion    = "1.1.0"
+	CurrentVersion    = "1.2.0"
 )
 
 func main() {
@@ -79,6 +80,7 @@ func main() {
 		ModuleCell:     "Cell",
 		ModuleAll:      "All",
 		ModuleUpdate:   "Update",
+		ModuleForciblyUpdate: "Forcibly Update",
 		ModuleExit:     "Exit",
 	}
 
@@ -110,22 +112,34 @@ func main() {
 			}
 			selected[index] = true
 		}
-		if _, exists := selected[ModuleExit]; exists {
+		var exists bool
+		if _, exists = selected[ModuleExit]; exists {
 			return
 		}
-		if _, exists := selected[ModuleAll]; exists {
+		if _, exists = selected[ModuleAll]; exists {
 			selected = map[int]bool{ModuleCore: true, ModuleFrontEnd:true, ModuleCell:true}
 		}
-		if _, exists := selected[ModuleUpdate]; exists{
-			UpdateAllModules()
+		if _, exists = selected[ModuleUpdate]; exists{
+			UpdateAllModules(false)
+			return
+		}else if _, exists = selected[ModuleForciblyUpdate]; exists{
+			UpdateAllModules(true)
 			return
 		}
 		break
 	}
+	var err error
+	if err = checkDefaultRoute(); err != nil{
+		fmt.Printf("check default route fail: %s\n", err.Error())
+		return
+	}
+	if err = checkFirewalld(); err != nil{
+		fmt.Printf("check firewalld fail: %s\n", err.Error())
+		return
+	}
 	var session = SessionInfo{Local: true}
 	session.BinaryPath = BinaryPathName
 	var username string
-	var err error
 	if username, err = framework.InputString("Service Owner Name", "root"); err != nil{
 		return
 	}
@@ -133,13 +147,13 @@ func main() {
 		fmt.Printf("set user info fail: %s\n", err.Error())
 		return
 	}
-
 	if err = installBasicComponents(&session); err != nil {
 		fmt.Printf("install basic components fail: %s\n", err.Error())
 		return
 	}
 	updateAllAccess(session)
 	fmt.Printf("%d modules will install...\n", len(selected))
+
 	var allRange []PortRange
 	//default ranges
 	{
@@ -167,10 +181,7 @@ func main() {
 			return
 		}
 	}
-	if err = checkDefaultRoute(); err != nil{
-		fmt.Printf("check default route fail: %s\n", err.Error())
-		return
-	}
+
 	for index := ModuleCore; index < ModuleExit; index++ {
 		if _, exists := selected[index]; exists {
 			//selected
@@ -195,7 +206,7 @@ func main() {
 		fmt.Printf("enable ip forward fail: %s", err.Error())
 		return
 	}
-	fmt.Println("all modules installed\n")
+	fmt.Println("all modules installed")
 }
 
 func checkDefaultRoute() (err error){
@@ -219,6 +230,42 @@ func checkDefaultRoute() (err error){
 	}
 	fmt.Printf("default route ready\n")
 	return nil
+}
+
+func checkFirewalld() (err error) {
+	var ready = false
+	//inactive (dead)
+	var cmd = exec.Command("systemctl", "status", "firewalld")
+	var output []byte
+	if output, err = cmd.CombinedOutput(); err != nil{
+		fmt.Println("warning: firewalld service maybe stopped")
+	}else {
+		var content = string(output)
+		if -1 != strings.Index(content, "; disabled;"){
+			//disabled
+			fmt.Println("warning: firewalld service disabled")
+		}else if -1 != strings.Index(content, "dead") || -1 != strings.Index(content, "inactive"){
+			fmt.Println("warning: firewalld service is stopped")
+		}else{
+			ready = true
+		}
+	}
+	if !ready {
+		fmt.Println("Nano requires a running firewalld service to work properly.\nenter to exit installation, or input 'yes' to continue")
+		var input string
+		_, err = fmt.Scanln(&input)
+		if "yes" != input{
+			err = errors.New("quit installation")
+			return
+		}
+		fmt.Println("warning: choose to continue with risk, your installation may not work")
+		return nil
+	}else{
+		fmt.Println("firewalld service ready")
+		return nil
+	}
+	//disabled
+
 }
 
 func enableIPForward() (err error){

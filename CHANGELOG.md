@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.2.0] - 2020-04-29
+
+### Added
+
+- Add forcibly update modules without check
+
+### Changed
+
+- Check firewalld status before installation
+
 ## [1.1.0] - 2020-01-02
 
 ### Changed
