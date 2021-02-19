@@ -1,28 +1,28 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"strconv"
-	"path/filepath"
-	"os"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"time"
+	"bufio"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
-	"io"
-	"os/exec"
-	"math/big"
+	"errors"
+	"fmt"
 	"github.com/project-nano/framework"
 	"github.com/project-nano/sonar"
-	"os/user"
-	"io/ioutil"
-	"path"
-	"bufio"
 	"github.com/vishvananda/netlink"
-	"errors"
+	"io"
+	"io/ioutil"
+	"math/big"
+	"os"
+	"os/exec"
+	"os/user"
+	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type SessionInfo struct {
@@ -70,7 +70,8 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
-	CurrentVersion    = "1.2.0"
+	CurrentVersion    = "1.2.1"
+	NanoVersion       = "1.3.1"
 )
 
 func main() {
@@ -89,7 +90,7 @@ func main() {
 		ModuleFrontEnd: FrontendInstaller,
 		ModuleCell:     CellInstaller,
 	}
-	fmt.Printf("Welcome to %s installer v%s\n", ProjectName, CurrentVersion)
+	fmt.Printf("Installer v%s started\n\nReady to install Project-Nano v%s ...\n", CurrentVersion, NanoVersion)
 	var selected = map[int]bool{}
 	for {
 		for index := ModuleCore; index <= ModuleExit; index++ {

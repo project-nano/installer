@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.2.1] - 2021-02-19
+
+### Added
+
+- Print nano version when start 
+
 ## [1.2.0] - 2020-04-29
 
 ### Added
