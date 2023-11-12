@@ -71,7 +71,7 @@ const (
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
 	CurrentVersion    = "1.2.1"
-	NanoVersion       = "1.3.1"
+	NanoVersion       = "1.4.0"
 )
 
 func main() {
