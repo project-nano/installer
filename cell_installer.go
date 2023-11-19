@@ -1,20 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"path/filepath"
-	"os"
+	"bufio"
 	"encoding/json"
-	"io/ioutil"
-	"os/exec"
-	"os/user"
-	"bytes"
-	"strings"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/project-nano/framework"
 	"github.com/vishvananda/netlink"
-	"bufio"
+	"io/ioutil"
 	"net"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -83,20 +82,21 @@ func installCellDependencyPackages() (err error){
 	}
 	fmt.Println("installing cell dependency packages...")
 	var cmd = exec.Command("rpm", "-i", "--force", fmt.Sprintf("%s/*", packagePath))
-	var errOutput bytes.Buffer
-	cmd.Stderr = &errOutput
-	if err = cmd.Run();err != nil{
-		fmt.Printf("install pacakge fail: %s, %s\n", err.Error(), errOutput.String())
+	if err = executeWithOutput(cmd);err != nil{
+		fmt.Printf("install pacakge fail: %s\n", err.Error())
 		fmt.Println("try installing from online reciprocity...")
 		{
 			//install EPEL first
 			epel := exec.Command("yum", "install", "-y", "epel-release")
-			epel.Run()
+			if err = epel.Run(); nil != err{
+				fmt.Printf("install EPEL fail: %s\n", err.Error())
+				return
+			}
 		}
 		cmd = exec.Command("yum", "install", "-y", "qemu-system-x86", "bridge-utils","libvirt",
 			"seabios", "genisoimage", "nfs-utils", "policycoreutils-python")
-		if err = cmd.Run();err != nil {
-			fmt.Printf("install online reciprocity fail: %s, %s\n", err.Error(), errOutput.String())
+		if err = executeWithOutput(cmd);err != nil {
+			fmt.Printf("install online reciprocity fail: %s\n", err.Error())
 			return
 		}
 	}
@@ -110,7 +110,7 @@ func enableLibvirtService(session *SessionInfo) (err error){
 	}
 	{
 		var cmd = exec.Command("systemctl", "enable", "libvirtd")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("enable libvirt fail: %s\n", err.Error())
 			return
 		}else{
@@ -119,7 +119,7 @@ func enableLibvirtService(session *SessionInfo) (err error){
 	}
 	{
 		var cmd = exec.Command("systemctl", "start", "libvirtd")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("start libvirt fail: %s\n", err.Error())
 			return
 		}else{
@@ -191,7 +191,7 @@ func configureLibvirtGroup(session *SessionInfo) (err error) {
 	}
 	if _, err = user.LookupGroup(GroupName);err != nil{
 		var cmd = exec.Command("groupadd","libvirt")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("create group fail: %s\n", err.Error())
 			return
 		}else{
@@ -224,7 +224,7 @@ func configureLibvirtGroup(session *SessionInfo) (err error) {
 	}
 	//need add
 	var cmd = exec.Command("usermod","-a", "-G", GroupName, session.User)
-	if err = cmd.Run();err != nil{
+	if err = executeWithOutput(cmd);err != nil{
 		fmt.Printf("add %s to group %s fail: %s\n", session.User, GroupName, err.Error())
 		return
 	}else{
@@ -258,7 +258,7 @@ func enableQEMUAuthority(user, group string) (err error){
 			return
 		}
 		var cmd = exec.Command("chown", fmt.Sprintf("%s:%s", user, group), KVMDevice)
-		if err = cmd.Run(); err != nil{
+		if err = executeWithOutput(cmd); err != nil{
 			return
 		}
 		fmt.Printf("%s owner changed\n", KVMDevice)
@@ -288,13 +288,13 @@ func configureNetworkForCell() (err error) {
 	{
 		//disable & stop network manager
 		var cmd = exec.Command("systemctl", "stop", "NetworkManager")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("warning: stop networkmanager fail: %s", err.Error())
 		}else{
 			fmt.Println("network manager stopped")
 		}
 		cmd = exec.Command("systemctl", "disable", "NetworkManager")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("warning: disable networkmanager fail: %s", err.Error())
 		}else{
 			fmt.Println("network manager disabled")
@@ -308,13 +308,13 @@ func configureNetworkForCell() (err error) {
 	{
 		//restart network
 		var cmd = exec.Command("systemctl", "stop", "network")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("warning: stop network service fail: %s", err.Error())
 		}else{
 			fmt.Println("network service stopped")
 		}
 		cmd = exec.Command("systemctl", "start", "network")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("warning: start network service fail: %s", err.Error())
 			return
 		}else{

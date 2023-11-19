@@ -70,7 +70,7 @@ const (
 	DefaultPathPerm   = 0740
 	DefaultFilePerm   = 0640
 	DefaultBridgeName = "br0"
-	CurrentVersion    = "1.2.1"
+	CurrentVersion    = "1.2.2"
 	NanoVersion       = "1.4.0"
 )
 
@@ -311,7 +311,7 @@ func enableIPForward() (err error){
 	}
 	{
 		var cmd = exec.Command("/sbin/sysctl", "-w", "net.ipv4.ip_forward=1")
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("enable ip_forward fail: %s", err.Error())
 			return
 		}else{
@@ -353,7 +353,7 @@ func setUserInfo(session *SessionInfo, userName string) (err error) {
 func updateAllAccess(session SessionInfo){
 	var cmd = exec.Command("chown", "-R", fmt.Sprintf("%s:%s", session.User, session.UserGroup),
 		session.ProjectPath)
-	if err := cmd.Run();err != nil{
+	if err := executeWithOutput(cmd);err != nil{
 		fmt.Printf("update access fail: %s\n", err.Error())
 	}else{
 		fmt.Println("all access modified")
@@ -511,7 +511,7 @@ func installRootCA(session *SessionInfo) (err error) {
 		}
 		updateAccess(session, trustedCertFile)
 		var cmd = exec.Command("update-ca-trust")
-		if err = cmd.Run(); err != nil {
+		if err = executeWithOutput(cmd); err != nil {
 			return
 		} else {
 			fmt.Printf("'%s' updated\n", trustedCertFile)
@@ -533,7 +533,7 @@ func enabledPortRanges(session SessionInfo, ranges []PortRange) (err error) {
 
 	//enable multicast
 	var cmd = exec.Command("firewall-cmd", "--permanent","--direct","--add-rule","ipv4","filter","INPUT","0","-m","pkttype","--pkt-type","multicast","-j","ACCEPT")
-	if err = cmd.Run();err != nil{
+	if err = executeWithOutput(cmd);err != nil{
 		fmt.Printf("enable multicast warning: %s", err.Error())
 	}
 	for _, config := range ranges{
@@ -542,12 +542,12 @@ func enabledPortRanges(session SessionInfo, ranges []PortRange) (err error) {
 		}else{
 			cmd = exec.Command("firewall-cmd","--zone=public", "--permanent", fmt.Sprintf("--add-port=%d/%s", config.Begin, config.Protocol))
 		}
-		if err = cmd.Run();err != nil{
+		if err = executeWithOutput(cmd);err != nil{
 			fmt.Printf("add ports warning: %s", err.Error())
 		}
 	}
 	cmd = exec.Command("firewall-cmd","--reload")
-	return  cmd.Run()
+	return executeWithOutput(cmd)
 }
 
 func ensurePath(path, name string, uid, gid int) (err error) {
@@ -634,4 +634,12 @@ func copyDir(src string, dst string) error {
 		}
 	}
 	return nil
+}
+
+func executeWithOutput(cmd *exec.Cmd) (err error){
+	var output []byte
+	if output, err = cmd.CombinedOutput(); err != nil{
+		err = errors.New(string(output))
+	}
+	return
 }

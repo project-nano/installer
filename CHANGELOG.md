@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.2.2] - 2023-11-19
+
+### Changed
+
+- Optimize error output when shell command executed fail
+- Upgrade go.mod with go 1.17 and newer dependent packages
+
 ## [1.2.1] - 2021-02-19
 
 ### Added

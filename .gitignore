@@ -12,6 +12,7 @@
 *.out
 
 .idea
+.fleet
 log
 pkg
 cert
