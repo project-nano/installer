@@ -2,6 +2,11 @@
 
 ## [1.2.2] - 2023-11-19
 
+### 变更
+
+- 优化命令行执行失败时的输出信息
+- 更新go.mod的go版本为1.17，更新依赖包版本
+
 ### Changed
 
 - Optimize error output when shell command executed fail
